@@ -55,6 +55,7 @@
 #define L2C_COC_CHAN_MAX                                                        1                                                                                                // set by library:cordio
 #define L2C_COC_REG_MAX                                                         1                                                                                                // set by library:cordio
 #define LPTICKER_DELAY_TICKS                                                    0                                                                                                // set by target:PORTENTA_H7
+#define MBED_ALL_STATS_ENABLED                                                  1                                                                                                // set by application[*]
 #define MBED_CONF_ALT1250_PPP_BAUDRATE                                          115200                                                                                           // set by library:ALT1250_PPP
 #define MBED_CONF_ALT1250_PPP_PROVIDE_DEFAULT                                   0                                                                                                // set by library:ALT1250_PPP
 #define MBED_CONF_ATMEL_RF_ASSUME_SPACED_SPI                                    1                                                                                                // set by library:atmel-rf[STM]
@@ -305,7 +306,7 @@
 #define MBED_CONF_PLATFORM_MINIMAL_PRINTF_SET_FLOATING_POINT_MAX_DECIMALS       6                                                                                                // set by library:platform
 #define MBED_CONF_PLATFORM_POLL_USE_LOWPOWER_TIMER                              0                                                                                                // set by library:platform
 #define MBED_CONF_PLATFORM_STDIO_BAUD_RATE                                      115200                                                                                           // set by application[*]
-#define MBED_CONF_PLATFORM_STDIO_BUFFERED_SERIAL                                0                                                                                                // set by library:platform
+#define MBED_CONF_PLATFORM_STDIO_BUFFERED_SERIAL                                1                                                                                                // set by application[*]
 #define MBED_CONF_PLATFORM_STDIO_CONVERT_NEWLINES                               1                                                                                                // set by library:platform
 #define MBED_CONF_PLATFORM_STDIO_CONVERT_TTY_NEWLINES                           1                                                                                                // set by library:platform
 #define MBED_CONF_PLATFORM_STDIO_FLUSH_AT_EXIT                                  1                                                                                                // set by library:platform
@@ -408,13 +409,13 @@
 #define MBED_CONF_TARGET_LPTICKER_LPTIM                                         1                                                                                                // set by target:MCU_STM32H7
 #define MBED_CONF_TARGET_LPTICKER_LPTIM_CLOCK                                   1                                                                                                // set by target:MCU_STM32
 #define MBED_CONF_TARGET_LPUART_CLOCK_SOURCE                                    USE_LPUART_CLK_LSE|USE_LPUART_CLK_PCLK1                                                          // set by target:MCU_STM32
-#define MBED_CONF_TARGET_LSE_AVAILABLE                                          0                                                                                                // set by target:PORTENTA_H7
+#define MBED_CONF_TARGET_LSE_AVAILABLE                                          1                                                                                                // set by target:PORTENTA_H7
 #define MBED_CONF_TARGET_LSE_BYPASS                                             1                                                                                                // set by target:PORTENTA_H7
 #define MBED_CONF_TARGET_MPU_ROM_END                                            0x0fffffff                                                                                       // set by target:Target
 #define MBED_CONF_TARGET_NETWORK_DEFAULT_INTERFACE_TYPE                         ETHERNET                                                                                         // set by target:PORTENTA_H7
 #define MBED_CONF_TARGET_TICKLESS_FROM_US_TICKER                                0                                                                                                // set by target:Target
 #define MBED_CONF_TARGET_USB_SPEED                                              USE_USB_OTG_FS                                                                                   // set by application[*]
-#define MBED_CONF_TARGET_XIP_ENABLE                                             0                                                                                                // set by target:Target
+#define MBED_CONF_TARGET_XIP_ENABLE                                             1                                                                                                // set by application[*]
 #define MBED_CONF_TELIT_HE910_BAUDRATE                                          115200                                                                                           // set by library:TELIT_HE910
 #define MBED_CONF_TELIT_HE910_PROVIDE_DEFAULT                                   0                                                                                                // set by library:TELIT_HE910
 #define MBED_CONF_TELIT_ME310_BAUDRATE                                          115200                                                                                           // set by library:TELIT_ME310
