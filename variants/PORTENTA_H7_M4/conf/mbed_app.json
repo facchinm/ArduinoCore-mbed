@@ -10,6 +10,13 @@
       "platform.all-stats-enabled": true,
       "rtos.main-thread-stack-size": 32768,
       "cordio.max-connections": 5,
+      "target.xip-enable": true,
+      "target.mbed_app_start": "0x60000000",
+      "target.mbed_rom_start": "0x60000000",
+      "target.mbed_ram_start": "0x60040000",
+      "target.mbed_app_size": "0x40000",
+      "target.mbed_rom_size": "0x40000",
+      "target.mbed_ram_size": "0x40000",
       "target.device_has_remove": [ "EMAC" ],
       "target.macros_add": [
         "METAL_INTERNAL",
