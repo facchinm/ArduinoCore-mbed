@@ -4,8 +4,8 @@
 #include "stm32h7xx_hal_dcmi.h"
 #include "SDRAM.h"
 
-#define LCD_FRAME_BUFFER                  0xC0000000 /* LCD Frame buffer of size 800x480 in ARGB8888 */
-#define CAMERA_FRAME_BUFFER               0xC0200000
+#define LCD_FRAME_BUFFER                  SDRAM_START_ADDRESS /* LCD Frame buffer of size 800x480 in ARGB8888 */
+#define CAMERA_FRAME_BUFFER               SDRAM_START_ADDRESS + 0x200000
 
 #define QVGA_RES_X	324
 #define QVGA_RES_Y	244
