@@ -18,6 +18,7 @@ class USBHost {
 public:
 	uint32_t Init(uint8_t id, const tusbh_class_reg_t class_table[]);
 	uint32_t Task();
+	void debug(HardwareSerial& s);
 
 	tusb_host_t* fs() {
 		return _fs;
