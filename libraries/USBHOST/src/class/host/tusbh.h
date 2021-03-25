@@ -227,8 +227,10 @@ int tusbh_ep_clear_feature(tusbh_ep_info_t* ep);
 #define LOG_INFO 1
 #endif
 
+extern void tusb_printf(const char* fmt, ...);
+
 #ifndef TUSB_PRINTF
-#define TUSB_PRINTF printf
+#define TUSB_PRINTF tusb_printf
 #endif
 
 #if LOG_INFO
