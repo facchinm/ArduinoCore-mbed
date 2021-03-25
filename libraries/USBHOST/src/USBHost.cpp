@@ -52,10 +52,27 @@ uint32_t USBHost::Task() {
 
 }
 
+static HardwareSerial* DebugSerial = NULL;
+
+void USBHost::debug(HardwareSerial& s) {
+  DebugSerial = &s;
+}
+
 extern "C" {
   // host need accurate delay
   void tusb_delay_ms(uint32_t ms)
   {
     delay(ms);
+  }
+
+  void tusb_printf(const char* fmt, ...) {
+    if (DebugSerial != NULL) {
+      char buffer[256];
+      va_list args;
+      va_start(args, fmt);
+      vsnprintf(buffer, 256, fmt, args);
+      DebugSerial->print(buffer);
+      va_end(args);
+    }
   }
 }
