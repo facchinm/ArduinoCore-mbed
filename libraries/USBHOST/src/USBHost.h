@@ -14,18 +14,19 @@ extern "C" {
 #include "mbed.h"
 #include "usb_phy_api.h"
 
+#include <vector>
+
+struct Device {
+	uint16_t vid;
+	uint16_t pid;
+};
+
 class USBHost {
 public:
 	uint32_t Init(uint8_t id, const tusbh_class_reg_t class_table[]);
 	uint32_t Task();
 	void debug(HardwareSerial& s);
-
-	tusb_host_t* fs() {
-		return _fs;
-	};
-	tusb_host_t* hs() {
-		return _hs;
-	};
+	std::vector<Device> lsusb();
 
 	/**
 	 * Allows to provide power to USB devices on VBUS when powered through VIN.
@@ -37,8 +38,6 @@ private:
 
 	void InternalTask();
 	tusbh_msg_q_t* mq;
-	tusb_host_t* _fs;
-	tusb_host_t* _hs;
-	tusbh_root_hub_t root_fs;
-	tusbh_root_hub_t root_hs;
+	tusb_host_t* host;
+	tusbh_root_hub_t root;
 };

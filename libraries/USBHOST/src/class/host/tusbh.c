@@ -998,7 +998,7 @@ int tusbh_test_parse_config(const void* cfg, int len)
     return tusbh_parse_config(dev);
 }
 
-static void ls_device(const tusbh_device_t* dev, int port, const tusbh_device_t* parent)
+void ls_device(const tusbh_device_t* dev, int port, const tusbh_device_t* parent)
 {
     if(parent){
         TUSB_PRINTF("  Device VID:%04x PID:%04x, Parent: Dev %02x:%d\n", 
