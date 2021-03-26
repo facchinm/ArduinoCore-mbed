@@ -100,6 +100,22 @@ void setup()
   //usb.Init(USB_CORE_ID_HS, class_table);
   usb.Init(USB_CORE_ID_FS, class_table);
   usb.debug(Serial);
+  auto devices = usb.lsusb();
+  Serial.print("Device connected: ");
+  if (devices.size() > 0) {
+    Serial.println("YES");
+    while (!devices.empty())
+    {
+      auto device = devices.back();
+      devices.pop_back();
+      Serial.print(device.first, HEX);
+      Serial.print(" ");
+      Serial.println(device.second, HEX);
+    }
+
+  } else {
+    Serial.println("NO");
+  }
 }
 
 void loop() {
