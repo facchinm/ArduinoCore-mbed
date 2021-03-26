@@ -103,6 +103,24 @@ void setup()
 }
 
 void loop() {
+  if (millis() > 5000 && millis() < 10000) {
+    auto devices = usb.lsusb();
+    Serial.print("Device connected: ");
+    if (devices.size() > 0) {
+      Serial.println("YES");
+      while (!devices.empty())
+      {
+        auto device = devices.back();
+        devices.pop_back();
+        Serial.print(device.vid, HEX);
+        Serial.print(":");
+        Serial.println(device.pid, HEX);
+      }
+    } else {
+      Serial.println("NO");
+    }
+  }
+  delay(1000);
   //usb.Task();
 }
 
