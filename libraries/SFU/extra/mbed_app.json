@@ -1,0 +1,13 @@
+{
+    "config": {
+        "update_file": {
+            "help": "Path to the application update binary on the SD card",
+            "value": "\"UPDATE.BIN\""
+        }
+    },
+    "target_overrides": {
+        "NANO_RP2040_CONNECT": {
+            "target.restrict_size": "0x40000"
+        }
+    }
+}
