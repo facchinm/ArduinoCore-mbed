@@ -63,10 +63,15 @@ rm -rf bootloaders
 mv _bootloaders bootloaders
 
 #Patch title in platform.txt
-sed -i "s/Arduino Mbed OS Boards/Arduino Mbed OS $FLAVOUR Boards/g" platform.txt
+sed -i "s/Arduino Mbed OS Boards/Arduino Mbed OS ${FLAVOUR^} Boards/g" platform.txt
 sed -i 's/9.9.9/$VERSION/g' platform.txt
+
+BASE_FOLDER=$PWD
 
 #Package! (remove .git, patches folders)
 cd ..
-tar --exclude='*.git*' --exclude='*patches*' -cjhf ArduinoCore-mbed-$FLAVOUR-$VERSION.tar.bz2 ArduinoCore-mbed
+tar --exclude='*.git*' --exclude='*patches*' -cjhf ArduinoCore-mbed-$FLAVOUR-$VERSION.tar.bz2 $BASE_FOLDER
+if [ x$FLAVOUR == x ]; then
+mv ArduinoCore-mbed-$FLAVOUR-$VERSION.tar.bz2 ArduinoCore-mbed-$VERSION.tar.bz2
+fi
 cd -
