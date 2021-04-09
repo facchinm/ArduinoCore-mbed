@@ -40,7 +40,7 @@ int main()
 
     printf("Starting application\r\n");
 
-    mbed_start_application(POST_APPLICATION_ADDR);
+    mbed_start_application(POST_APPLICATION_ADDR + 0x100);
 }
 
 void apply_update(FILE *file, uint32_t address)
