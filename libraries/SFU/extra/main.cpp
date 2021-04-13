@@ -5,14 +5,15 @@
 #define SD_MOUNT_PATH           "ota"
 #define FULL_UPDATE_FILE_PATH   "/" SD_MOUNT_PATH "/" MBED_CONF_APP_UPDATE_FILE
 
-#define POST_APPLICATION_ADDR   0x20000
+#define POST_APPLICATION_ADDR   0x10000
 
 #if !defined(POST_APPLICATION_ADDR)
 #error "target.restrict_size must be set for your target in mbed_app.json"
 #endif
 
 //Pin order: MOSI, MISO, SCK, CS
-FlashIAPBlockDevice sd(XIP_BASE + 0xF00000, 0x100000);
+//FlashIAPBlockDevice sd(XIP_BASE + 0xF00000, 0x100000);
+FlashIAPBlockDevice sd(XIP_BASE + 0x100000, 0x100000);
 FATFileSystem fs(SD_MOUNT_PATH);
 FlashIAP flash;
 
@@ -20,14 +21,19 @@ void apply_update(FILE *file, uint32_t address);
 
 int main()
 {
+    FILE *file;
     sd.init();
-    fs.mount(&sd);
+    int err = fs.mount(&sd);
+    if (err != 0) {
+        printf("No partition found\r\n");
+        goto boot;
+    }
 
-    FILE *file = fopen(FULL_UPDATE_FILE_PATH, "rb");
+    file = fopen(FULL_UPDATE_FILE_PATH, "rb");
     if (file != NULL) {
         printf("Firmware update found\r\n");
 
-        apply_update(file, POST_APPLICATION_ADDR);
+        apply_update(file, XIP_BASE + POST_APPLICATION_ADDR);
 
         fclose(file);
         remove(FULL_UPDATE_FILE_PATH);
@@ -36,20 +42,23 @@ int main()
     }
 
     fs.unmount();
+
+boot:
     sd.deinit();
 
     printf("Starting application\r\n");
 
-    mbed_start_application(POST_APPLICATION_ADDR + 0x100);
+    mbed_start_application(XIP_BASE + POST_APPLICATION_ADDR + 0x100);
 }
 
 void apply_update(FILE *file, uint32_t address)
 {
     fseek(file, 0, SEEK_END);
-    long len = ftell(file);
+    // Skip the first POST_APPLICATION_ADDR bytes
+    long len = ftell(file) - POST_APPLICATION_ADDR;
     printf("Firmware size is %ld bytes\r\n", len);
-    fseek(file, 0, SEEK_SET);
-  
+    fseek(file, POST_APPLICATION_ADDR, SEEK_SET);
+
     flash.init();
 
     const uint32_t page_size = flash.get_page_size();

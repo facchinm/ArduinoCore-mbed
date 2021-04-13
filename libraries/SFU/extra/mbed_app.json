@@ -7,7 +7,9 @@
     },
     "target_overrides": {
         "NANO_RP2040_CONNECT": {
-            "target.restrict_size": "0x20000"
+            "platform.stdio-baud-rate": 115200,
+            "target.c_lib": "small",
+            "target.restrict_size": "0x10000"
         }
     }
 }

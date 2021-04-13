@@ -8,6 +8,9 @@ MEMORY
 ENTRY(_entry_point)
 SECTIONS
 {
+    .second_stage_ota : {
+        KEEP (*(.second_stage_ota))
+    } > FLASH
     .flash_begin : {
         __flash_binary_start = .;
     } > FLASH
@@ -18,9 +21,6 @@ SECTIONS
     } > FLASH
     ASSERT(__boot2_end__ - __boot2_start__ == 256,
         "ERROR: Pico second stage bootloader must be 256 bytes in size")
-    .second_stage_ota : {
-        KEEP (*(.second_stage_ota))
-    } > FLASH
     .text : {
         __logical_binary_start = .;
         KEEP (*(.vectors))
