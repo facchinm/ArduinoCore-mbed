@@ -12,5 +12,6 @@
 -fno-exceptions
 -fomit-frame-pointer
 -funsigned-char
+-g
 -mcpu=cortex-m0plus
 -mthumb

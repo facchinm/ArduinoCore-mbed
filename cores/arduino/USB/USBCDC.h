@@ -203,6 +203,7 @@ protected:
 
     void _change_terminal_connected(bool connected);
 
+    void _send_isr_irq();
     void _send_isr_start();
     void _send_isr();
 

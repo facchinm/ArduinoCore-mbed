@@ -283,21 +283,28 @@ bool USBCDC::callback_request_xfer_done(const USBDevice::setup_packet_t *setup, 
     return success;
 }
 
+static bool configured = false;
+
 bool USBCDC::callback_set_configuration(uint8_t configuration)
 {
     assert_locked();
     /* Called in ISR context */
 
     bool ret = false;
-    // Configure endpoints > 0
-    PluggableUSBD().endpoint_add(_int_in, CDC_MAX_PACKET_SIZE, USB_EP_TYPE_INT);
-    PluggableUSBD().endpoint_add(_bulk_in, CDC_MAX_PACKET_SIZE, USB_EP_TYPE_BULK, ::mbed::callback(this, &USBCDC::_send_isr));
-    PluggableUSBD().endpoint_add(_bulk_out, CDC_MAX_PACKET_SIZE, USB_EP_TYPE_BULK, ::mbed::callback(this, &USBCDC::_receive_isr));
 
-    PluggableUSBD().read_start(_bulk_out, _rx_buf, sizeof(_rx_buffer));
-    _rx_in_progress = true;
+    if (configuration == DEFAULT_CONFIGURATION && !configured) {
 
-    ret = true;
+        // Configure endpoints > 0
+        PluggableUSBD().endpoint_add(_int_in, CDC_MAX_PACKET_SIZE, USB_EP_TYPE_INT);
+        PluggableUSBD().endpoint_add(_bulk_in, CDC_MAX_PACKET_SIZE, USB_EP_TYPE_BULK, ::mbed::callback(this, &USBCDC::_send_isr));
+        PluggableUSBD().endpoint_add(_bulk_out, CDC_MAX_PACKET_SIZE, USB_EP_TYPE_BULK, ::mbed::callback(this, &USBCDC::_receive_isr));
+
+        PluggableUSBD().read_start(_bulk_out, _rx_buf, sizeof(_rx_buffer));
+        _rx_in_progress = true;
+
+        ret = true;
+        configured = true;
+    }
 
     return ret;
 }

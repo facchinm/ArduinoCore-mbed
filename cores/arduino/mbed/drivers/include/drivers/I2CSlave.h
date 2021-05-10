@@ -172,7 +172,7 @@ public:
      *
      *  @return Result of the operation.
      *  @retval 0       If the number of bytes read is equal to length requested.
-     *  @retval the number of bytes read.
+     *  @retval nonzero On error or if the number of bytes read is less than requested.
      */
     int read(char *data, int length);
 

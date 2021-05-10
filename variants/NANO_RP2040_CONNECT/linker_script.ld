@@ -8,9 +8,6 @@ MEMORY
 ENTRY(_entry_point)
 SECTIONS
 {
-    .second_stage_ota : {
-        KEEP (*(.second_stage_ota))
-    } > FLASH
     .flash_begin : {
         __flash_binary_start = .;
     } > FLASH
