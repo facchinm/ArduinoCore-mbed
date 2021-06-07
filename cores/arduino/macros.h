@@ -27,6 +27,9 @@
 #include <PinNames.h>
 #include <platform/FileHandle.h>
 
+static const size_t F_CPU __attribute__ ((deprecated)) = 0;
+#define F_CPU F_CPU
+
 // this is needed for backwards compatibility
 #define digitalPinToInterrupt(P)    (P)
 
