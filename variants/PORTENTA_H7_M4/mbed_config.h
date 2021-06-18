@@ -47,7 +47,7 @@
 #define BLE_SECURITY_DATABASE_KVSTORE                                           0                                                                                                // set by library:ble
 #define BLE_SECURITY_DATABASE_MAX_ENTRIES                                       5                                                                                                // set by library:ble
 #define CLOCK_SOURCE                                                            USE_PLL_HSE_EXTC                                                                                 // set by target:PORTENTA_H7
-#define DM_CONN_MAX                                                             5                                                                                                // set by application[*]
+#define DM_CONN_MAX                                                             3                                                                                                // set by library:cordio
 #define DM_NUM_ADV_SETS                                                         3                                                                                                // set by library:cordio
 #define DM_NUM_PHYS                                                             3                                                                                                // set by library:cordio
 #define DM_SYNC_MAX                                                             1                                                                                                // set by library:cordio
@@ -406,6 +406,7 @@
 #define MBED_LFS_PROG_SIZE                                                      64                                                                                               // set by library:littlefs
 #define MBED_LFS_READ_SIZE                                                      64                                                                                               // set by library:littlefs
 #define MBED_STACK_DUMP_ENABLED                                                 0                                                                                                // set by library:platform
+#define MBED_TRACE_COLOR_THEME                                                  0                                                                                                // set by library:mbed-trace
 #define MEM_ALLOC                                                               malloc                                                                                           // set by library:mbed-trace
 #define MEM_FREE                                                                free                                                                                             // set by library:mbed-trace
 #define PPP_DEBUG                                                               0                                                                                                // set by library:ppp

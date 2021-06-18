@@ -10,7 +10,6 @@
       "platform.default-serial-baud-rate": 115200,
       "platform.callback-nontrivial": true,
       "rtos.main-thread-stack-size": 32768,
-      "cordio.max-connections": 5,
       "platform.all-stats-enabled": true,
       "target.mbed_app_start": "0x10000"
     }
