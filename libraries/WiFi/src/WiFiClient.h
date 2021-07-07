@@ -26,6 +26,7 @@
 #include "api/IPAddress.h"
 #include "TLSSocket.h"
 #include "TCPSocket.h"
+#include "rtos.h"
 
 namespace arduino {
 
@@ -54,12 +55,11 @@ public:
   void stop();
   uint8_t connected();
   operator bool() {
-    return sock != NULL;
+    return sock != nullptr;
   }
 
-  void setSocket(Socket* _sock) {
-    sock = _sock;
-  }
+  void setSocket(Socket* _sock);
+  void configureSocket(Socket* _s);
 
   IPAddress remoteIP();
   uint16_t remotePort();
@@ -77,12 +77,16 @@ protected:
 
 private:
   static uint16_t _srcport;
-  Socket* sock;
+  Socket* sock = nullptr;
   RingBufferN<256> rxBuffer;
   bool _status;
   mbed::Callback<int(void)> beforeConnect;
   SocketAddress address;
+  rtos::Thread* reader_th;
+  rtos::EventFlags* event;
+  rtos::Mutex* mutex;
 
+  void readSocket();
   void getStatus();
 };
 

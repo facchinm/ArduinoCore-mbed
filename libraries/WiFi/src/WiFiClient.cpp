@@ -13,42 +13,75 @@ extern WiFiClass WiFi;
 arduino::WiFiClient::WiFiClient():
     _status(false)
 {
+	event = new rtos::EventFlags;
+	mutex = new rtos::Mutex;
 }
 
 uint8_t arduino::WiFiClient::status() {
 	return _status;
 }
 
-void arduino::WiFiClient::getStatus() {
-	if (sock == nullptr) {
-		_status = false;
-		return;
+void arduino::WiFiClient::readSocket() {
+	while (1) {
+		event->wait_any(0xFF, 100);
+		if (sock == nullptr) {
+			break;
+		}
+	    uint8_t data[256];
+	    int ret;
+	    do {
+	    	if (rxBuffer.availableForStore() == 0) {
+	    		yield();
+	    	}
+	    	mutex->lock();
+		    ret = sock->recv(data, rxBuffer.availableForStore());
+		    if (ret < 0 && ret != NSAPI_ERROR_WOULD_BLOCK) {
+		        _status = false;
+		        mutex->unlock();
+		        break;
+		    }
+		    for (int i = 0; i < ret; i++) {
+		      rxBuffer.store_char(data[i]);
+		    }
+		    mutex->unlock();
+		   	_status = true;
+		} while (ret == NSAPI_ERROR_WOULD_BLOCK || ret > 0);
 	}
-        
-    uint8_t data[256];
-    int ret = sock->recv(data, rxBuffer.availableForStore());
-    for (int i = 0; i < ret; i++) {
-      rxBuffer.store_char(data[i]);
-    }
-    if (ret < 0 && ret != NSAPI_ERROR_WOULD_BLOCK) {
-        _status = false;
-    }
-    _status = true;
+}
+
+void arduino::WiFiClient::getStatus() {
+	event->set(1);
+}
+
+void arduino::WiFiClient::setSocket(Socket* _sock) {
+  sock = _sock;
+  configureSocket(sock);
+}
+
+void arduino::WiFiClient::configureSocket(Socket* _s) {
+	_s->set_timeout(0);
+	_s->set_blocking(false);
+	_s->sigio(mbed::callback(this, &WiFiClient::getStatus));
+	reader_th = new rtos::Thread;
+	reader_th->start(mbed::callback(this, &WiFiClient::readSocket));
 }
 
 int arduino::WiFiClient::connect(SocketAddress socketAddress) {
 	if (sock == nullptr) {
-		sock = new TCPSocket();		
-		if(static_cast<TCPSocket*>(sock)->open(WiFi.getNetwork()) != NSAPI_ERROR_OK){
-			return 0;
-		}
+		sock = new TCPSocket();
 	}
-	//sock->sigio(mbed::callback(this, &WiFiClient::getStatus));
-	//sock->set_blocking(false);
+	if (sock == nullptr) {
+		return 0;
+	}
+
+	if(static_cast<TCPSocket*>(sock)->open(WiFi.getNetwork()) != NSAPI_ERROR_OK){
+		return 0;
+	}
+
 	address = socketAddress;
-	sock->set_timeout(SOCKET_TIMEOUT);
 	nsapi_error_t returnCode = static_cast<TCPSocket*>(sock)->connect(socketAddress);
 	int ret = 0;
+
 	switch (returnCode) {
 	case NSAPI_ERROR_IS_CONNECTED:
 	case NSAPI_ERROR_OK: {
@@ -58,6 +91,8 @@ int arduino::WiFiClient::connect(SocketAddress socketAddress) {
 	}
 	if (ret == 1)
 		_status = true;
+
+	configureSocket(sock);
 
 	return ret;
 }
@@ -83,7 +118,7 @@ int arduino::WiFiClient::connectSSL(SocketAddress socketAddress){
 	if (beforeConnect) {
 		beforeConnect();
 	}
-	sock->set_timeout(SOCKET_TIMEOUT);	
+	sock->set_timeout(SOCKET_TIMEOUT);
 	nsapi_error_t returnCode = static_cast<TLSSocket*>(sock)->connect(socketAddress);
 	int ret = 0;
 	switch (returnCode) {
@@ -111,36 +146,38 @@ int arduino::WiFiClient::connectSSL(const char *host, uint16_t port) {
 }
 
 size_t arduino::WiFiClient::write(uint8_t c) {
-	if (sock == nullptr)
-		return 0;
-	auto ret = sock->send(&c, 1);
-	return ret;
+	return write(&c, 1);
 }
 
 size_t arduino::WiFiClient::write(const uint8_t *buf, size_t size) {
 	if (sock == nullptr)
 		return 0;
 
-	auto ret = sock->send(buf, size);
-	return ret;
+	sock->set_blocking(true);
+	sock->set_timeout(1000);
+	sock->send(buf, size);
+	configureSocket(sock);
+	return size;
 }
 
 int arduino::WiFiClient::available() {
-	if (rxBuffer.available() == 0) {
-		getStatus();
-	}
-    return rxBuffer.available();
+	int ret = rxBuffer.available();
+    return ret;
 }
 
 int arduino::WiFiClient::read() {
+	mutex->lock();
 	if (!available()) {
     	return -1;
 	}
 
-	return rxBuffer.read_char();
+	int ret = rxBuffer.read_char();
+	mutex->unlock();
+	return ret;
 }
 
 int arduino::WiFiClient::read(uint8_t *data, size_t len) {
+	mutex->lock();
 	int avail = available();
 
 	if (!avail) {
@@ -154,6 +191,7 @@ int arduino::WiFiClient::read(uint8_t *data, size_t len) {
 	for (size_t i = 0; i < len; i++) {
 		data[i] = rxBuffer.read_char();
 	}
+	mutex->unlock();
 
 	return len;
 }
@@ -168,14 +206,16 @@ void arduino::WiFiClient::flush() {
 
 void arduino::WiFiClient::stop() {
 	if (sock != nullptr) {
-		sock->close();
+		delete sock;
 		sock = nullptr;
 	}
 	_status = false;
+	reader_th->join();
+	delete reader_th;
+	digitalWrite(LEDB, HIGH);
 }
 
 uint8_t arduino::WiFiClient::connected() {
-    getStatus();
 	return _status;
 }
 
