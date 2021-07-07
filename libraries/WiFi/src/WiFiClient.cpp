@@ -62,8 +62,10 @@ void arduino::WiFiClient::configureSocket(Socket* _s) {
 	_s->set_timeout(0);
 	_s->set_blocking(false);
 	_s->sigio(mbed::callback(this, &WiFiClient::getStatus));
-	reader_th = new rtos::Thread;
-	reader_th->start(mbed::callback(this, &WiFiClient::readSocket));
+	if (reader_th == nullptr) {
+		reader_th = new rtos::Thread;
+		reader_th->start(mbed::callback(this, &WiFiClient::readSocket));
+	}
 }
 
 int arduino::WiFiClient::connect(SocketAddress socketAddress) {
@@ -209,10 +211,12 @@ void arduino::WiFiClient::stop() {
 		delete sock;
 		sock = nullptr;
 	}
+	if (reader_th != nullptr) {
+		reader_th->join();
+		delete reader_th;
+		reader_th = nullptr;
+	}
 	_status = false;
-	reader_th->join();
-	delete reader_th;
-	digitalWrite(LEDB, HIGH);
 }
 
 uint8_t arduino::WiFiClient::connected() {

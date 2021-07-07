@@ -82,9 +82,9 @@ private:
   bool _status;
   mbed::Callback<int(void)> beforeConnect;
   SocketAddress address;
-  rtos::Thread* reader_th;
-  rtos::EventFlags* event;
-  rtos::Mutex* mutex;
+  rtos::Thread* reader_th = nullptr;
+  rtos::EventFlags* event = nullptr;
+  rtos::Mutex* mutex = nullptr;
 
   void readSocket();
   void getStatus();
