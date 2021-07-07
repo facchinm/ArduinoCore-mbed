@@ -13,8 +13,6 @@ extern WiFiClass WiFi;
 arduino::WiFiClient::WiFiClient():
     _status(false)
 {
-	event = new rtos::EventFlags;
-	mutex = new rtos::Mutex;
 }
 
 uint8_t arduino::WiFiClient::status() {
@@ -62,10 +60,18 @@ void arduino::WiFiClient::configureSocket(Socket* _s) {
 	_s->set_timeout(0);
 	_s->set_blocking(false);
 	_s->sigio(mbed::callback(this, &WiFiClient::getStatus));
+
+	if (event == nullptr) {
+		event = new rtos::EventFlags;
+	}
+	if (mutex == nullptr) {
+		mutex = new rtos::Mutex;
+	}
 	if (reader_th == nullptr) {
 		reader_th = new rtos::Thread;
 		reader_th->start(mbed::callback(this, &WiFiClient::readSocket));
 	}
+	_status = true;
 }
 
 int arduino::WiFiClient::connect(SocketAddress socketAddress) {
@@ -91,10 +97,13 @@ int arduino::WiFiClient::connect(SocketAddress socketAddress) {
 		break;
 	}
 	}
-	if (ret == 1)
-		_status = true;
 
-	configureSocket(sock);
+	if (ret == 1) {
+		configureSocket(sock);
+		_status = true;
+	} else {
+		_status = false;
+	}
 
 	return ret;
 }
@@ -208,13 +217,22 @@ void arduino::WiFiClient::flush() {
 
 void arduino::WiFiClient::stop() {
 	if (sock != nullptr) {
-		delete sock;
+		// TODO: check why "delete sock" breaks if created from WiFiServer.available()
+		sock->close();
 		sock = nullptr;
 	}
 	if (reader_th != nullptr) {
 		reader_th->join();
 		delete reader_th;
 		reader_th = nullptr;
+	}
+	if (event != nullptr) {
+		delete event;
+		event = nullptr;
+	}
+	if (mutex != nullptr) {
+		delete mutex;
+		mutex = nullptr;
 	}
 	_status = false;
 }
