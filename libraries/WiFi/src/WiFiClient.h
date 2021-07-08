@@ -38,6 +38,21 @@ class WiFiClient : public arduino::Client {
 
 public:
   WiFiClient();
+  WiFiClient(WiFiClient* orig) {
+    /*
+    this->reader_th = orig->reader_th;
+    this->event = orig->event;
+    this->mutex = orig->mutex;
+    this->sock = orig->sock;
+    this->_status = orig->_status;
+    this->rxBuffer = orig->rxBuffer;
+    */
+    this->sock = orig->sock;
+    orig->borrowed_socket = true;
+    orig->stop();
+    this->setSocket(orig->sock);
+  }
+
   virtual ~WiFiClient() {
     stop();
   }
@@ -80,11 +95,12 @@ protected:
   }
 
 private:
-  static uint16_t _srcport;
   Socket* sock = nullptr;
   RingBufferN<SOCKET_BUFFER_SIZE> rxBuffer;
-  bool _status;
+  bool _status = false;
+  bool borrowed_socket = false;
   bool _own_socket = false;
+  bool closing = false;
   mbed::Callback<int(void)> beforeConnect;
   SocketAddress address;
   rtos::Thread* reader_th = nullptr;
