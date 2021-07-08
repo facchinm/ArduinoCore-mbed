@@ -80,6 +80,7 @@ private:
   Socket* sock = nullptr;
   RingBufferN<256> rxBuffer;
   bool _status;
+  bool _own_socket = false;
   mbed::Callback<int(void)> beforeConnect;
   SocketAddress address;
   rtos::Thread* reader_th = nullptr;

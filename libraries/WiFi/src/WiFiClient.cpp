@@ -81,6 +81,7 @@ void arduino::WiFiClient::configureSocket(Socket* _s) {
 int arduino::WiFiClient::connect(SocketAddress socketAddress) {
 	if (sock == nullptr) {
 		sock = new TCPSocket();
+		_own_socket = true;
 	}
 	if (sock == nullptr) {
 		return 0;
@@ -123,28 +124,51 @@ int arduino::WiFiClient::connect(const char *host, uint16_t port) {
 	return connect(socketAddress);
 }
 
-int arduino::WiFiClient::connectSSL(SocketAddress socketAddress){
+int arduino::WiFiClient::connectSSL(SocketAddress socketAddress) {
 	if (sock == nullptr) {
 		sock = new TLSSocket();
-		if(static_cast<TLSSocket*>(sock)->open(WiFi.getNetwork()) != NSAPI_ERROR_OK){
-			return 0;
-		}
+		_own_socket = true;
 	}
+	if (sock == nullptr) {
+		return 0;
+	}
+
 	if (beforeConnect) {
 		beforeConnect();
 	}
-	sock->set_timeout(SOCKET_TIMEOUT);
+
+	if(static_cast<TLSSocket*>(sock)->open(WiFi.getNetwork()) != NSAPI_ERROR_OK){
+		return 0;
+	}
+
+	address = socketAddress;
+
+restart_connect:
 	nsapi_error_t returnCode = static_cast<TLSSocket*>(sock)->connect(socketAddress);
 	int ret = 0;
+
+	Serial.println(returnCode);
+
 	switch (returnCode) {
-	case NSAPI_ERROR_IS_CONNECTED:
-	case NSAPI_ERROR_OK: {
-		ret = 1;
-		break;
+		case NSAPI_ERROR_IS_CONNECTED:
+		case NSAPI_ERROR_OK: {
+			ret = 1;
+			break;
+		}
+		case NSAPI_ERROR_IN_PROGRESS:
+		case NSAPI_ERROR_ALREADY: {
+			delay(100);
+			goto restart_connect;
+		}
 	}
-	}
-	if (ret == 1)
+
+	configureSocket(sock);
+
+	if (ret == 1) {
 		_status = true;
+	} else {
+		_status = false;
+	}
 
 	return ret;
 }
@@ -224,9 +248,9 @@ void arduino::WiFiClient::stop() {
 		mutex->lock();
 	}
 	if (sock != nullptr) {
-		// TODO: check why "delete sock" breaks if created from WiFiServer.available()
-		//delete sock;
 		sock->close();
+		if (_own_socket)
+			delete sock;
 		sock = nullptr;
 	}
 	if (mutex != nullptr) {
