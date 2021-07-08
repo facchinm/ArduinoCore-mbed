@@ -22,29 +22,31 @@ uint8_t arduino::WiFiClient::status() {
 void arduino::WiFiClient::readSocket() {
 	while (1) {
 		event->wait_any(0xFF, 100);
-		if (sock == nullptr) {
-			break;
-		}
 	    uint8_t data[256];
-	    int ret;
+	    int ret = NSAPI_ERROR_WOULD_BLOCK;
 	    do {
+	    	mutex->lock();
 	    	if (rxBuffer.availableForStore() == 0) {
 	    		yield();
 	    	}
-	    	mutex->lock();
+	    	if (sock == nullptr) {
+	    		goto cleanup;
+			}
 		    ret = sock->recv(data, rxBuffer.availableForStore());
 		    if (ret < 0 && ret != NSAPI_ERROR_WOULD_BLOCK) {
-		        _status = false;
-		        mutex->unlock();
-		        break;
+		    	goto cleanup;
 		    }
 		    for (int i = 0; i < ret; i++) {
 		      rxBuffer.store_char(data[i]);
 		    }
-		    mutex->unlock();
 		   	_status = true;
+		    mutex->unlock();
 		} while (ret == NSAPI_ERROR_WOULD_BLOCK || ret > 0);
 	}
+cleanup:
+	_status = false;
+	mutex->unlock();
+	return;
 }
 
 void arduino::WiFiClient::getStatus() {
@@ -59,7 +61,6 @@ void arduino::WiFiClient::setSocket(Socket* _sock) {
 void arduino::WiFiClient::configureSocket(Socket* _s) {
 	_s->set_timeout(0);
 	_s->set_blocking(false);
-	_s->sigio(mbed::callback(this, &WiFiClient::getStatus));
 
 	if (event == nullptr) {
 		event = new rtos::EventFlags;
@@ -67,10 +68,13 @@ void arduino::WiFiClient::configureSocket(Socket* _s) {
 	if (mutex == nullptr) {
 		mutex = new rtos::Mutex;
 	}
+	mutex->lock();
 	if (reader_th == nullptr) {
 		reader_th = new rtos::Thread;
 		reader_th->start(mbed::callback(this, &WiFiClient::readSocket));
 	}
+	mutex->unlock();
+	_s->sigio(mbed::callback(this, &WiFiClient::getStatus));
 	_status = true;
 }
 
@@ -216,10 +220,17 @@ void arduino::WiFiClient::flush() {
 }
 
 void arduino::WiFiClient::stop() {
+	if (mutex != nullptr) {
+		mutex->lock();
+	}
 	if (sock != nullptr) {
 		// TODO: check why "delete sock" breaks if created from WiFiServer.available()
+		//delete sock;
 		sock->close();
 		sock = nullptr;
+	}
+	if (mutex != nullptr) {
+		mutex->unlock();
 	}
 	if (reader_th != nullptr) {
 		reader_th->join();
