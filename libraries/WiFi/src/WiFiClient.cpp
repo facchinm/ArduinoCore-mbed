@@ -25,7 +25,7 @@ void arduino::WiFiClient::readSocket() {
 	    	if (rxBuffer.availableForStore() == 0) {
 	    		yield();
 	    	}
-	    	if (sock == nullptr || closing) {
+	    	if (sock == nullptr || (closing && borrowed_socket)) {
 	    		goto cleanup;
 			}
 		    ret = sock->recv(data, rxBuffer.availableForStore());
@@ -240,21 +240,19 @@ void arduino::WiFiClient::stop() {
 	if (mutex != nullptr) {
 		mutex->lock();
 	}
-	closing = true;
 	if (sock != nullptr && borrowed_socket == false) {
-		printf("socket deleted: %d\n", (int)this);
-		printf("%d borrowed\n", borrowed_socket);
-		sock->close();
 		if (_own_socket) {
 			delete sock;
+		} else {
+			sock->close();
 		}
 		sock = nullptr;
 	}
+	closing = true;
 	if (mutex != nullptr) {
 		mutex->unlock();
 	}
 	if (reader_th != nullptr) {
-		printf("thread deleted\n");
 		reader_th->join();
 		delete reader_th;
 		reader_th = nullptr;
