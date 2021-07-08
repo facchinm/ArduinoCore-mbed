@@ -2,12 +2,8 @@
 
 extern WiFiClass WiFi;
 
-#ifndef WIFI_TCP_BUFFER_SIZE
-#define WIFI_TCP_BUFFER_SIZE        1508
-#endif
-
 #ifndef SOCKET_TIMEOUT
-#define SOCKET_TIMEOUT 1000
+#define SOCKET_TIMEOUT 1500
 #endif
 
 arduino::WiFiClient::WiFiClient():
@@ -22,7 +18,7 @@ uint8_t arduino::WiFiClient::status() {
 void arduino::WiFiClient::readSocket() {
 	while (1) {
 		event->wait_any(0xFF, 100);
-	    uint8_t data[256];
+	    uint8_t data[SOCKET_BUFFER_SIZE];
 	    int ret = NSAPI_ERROR_WOULD_BLOCK;
 	    do {
 	    	mutex->lock();
@@ -147,8 +143,6 @@ restart_connect:
 	nsapi_error_t returnCode = static_cast<TLSSocket*>(sock)->connect(socketAddress);
 	int ret = 0;
 
-	Serial.println(returnCode);
-
 	switch (returnCode) {
 		case NSAPI_ERROR_IS_CONNECTED:
 		case NSAPI_ERROR_OK: {
@@ -193,7 +187,7 @@ size_t arduino::WiFiClient::write(const uint8_t *buf, size_t size) {
 		return 0;
 
 	sock->set_blocking(true);
-	sock->set_timeout(1000);
+	sock->set_timeout(SOCKET_TIMEOUT);
 	sock->send(buf, size);
 	configureSocket(sock);
 	return size;
