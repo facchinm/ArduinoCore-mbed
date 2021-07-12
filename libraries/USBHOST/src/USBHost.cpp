@@ -1,7 +1,8 @@
 #include "USBHost.h"
 #include "USB251xB.h"
+#include "DeepSleepLock.h"
 
-static rtos::Thread t(osPriorityHigh);
+static rtos::Thread t(osPriorityNormal, 8192, nullptr, "usbhost");
 
 void USBHost::supplyPowerOnVBUS(bool enable){
   mbed::DigitalOut otg(PJ_6, enable ? 0 : 1);
@@ -9,6 +10,8 @@ void USBHost::supplyPowerOnVBUS(bool enable){
 
 void USBHost::InternalTask() {
   while (1) {
+    digitalWrite(5, HIGH);
+    digitalWrite(5, LOW);
     tusbh_msg_loop(mq);
   }
 }
@@ -17,6 +20,12 @@ uint32_t USBHost::Init(uint8_t id, const tusbh_class_reg_t class_table[]) {
 
   mq = tusbh_mq_create();
   tusbh_mq_init(mq);
+
+  sleep_manager_lock_deep_sleep();
+
+  pinMode(5, OUTPUT);
+
+  t.start(mbed::callback(this, &USBHost::InternalTask));
 
   if (id == USB_CORE_ID_FS) {
     host = tusb_get_host(USB_CORE_ID_FS);
@@ -42,8 +51,6 @@ uint32_t USBHost::Init(uint8_t id, const tusbh_class_reg_t class_table[]) {
     tusb_host_init(host, &root);
     tusb_open_host(host);
   }
-
-  t.start(mbed::callback(this, &USBHost::InternalTask));
 }
 
 std::vector<Device> USBHost::lsusb() {

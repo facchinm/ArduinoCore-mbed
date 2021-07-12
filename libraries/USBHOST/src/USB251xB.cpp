@@ -114,6 +114,12 @@ void write_hub_configuration(struct usb251xb* hub) {
   Wire.begin();
   Wire.setClock(100000);
 
+  Wire.beginTransmission(0x2C);
+  int ret = Wire.endTransmission();
+  if (ret != 0) {
+    return;
+  }
+
   if (hub->skip_config) {
     Wire.beginTransmission(0x2C);
     Wire.write(USB251XB_ADDR_STATUS_COMMAND);

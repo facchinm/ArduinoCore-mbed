@@ -1137,7 +1137,7 @@ uint32_t tusb_otg_host_xfer_data_split(tusb_host_t* host, uint8_t hc_num, uint8_
 
   tusb_otg_host_submit(host, hc_num);
 
-  delayMicroseconds(300);
+  //delayMicroseconds(300);
 
   hc->xfer_done = 0;
 
@@ -1157,7 +1157,7 @@ uint32_t tusb_otg_host_xfer_data_split(tusb_host_t* host, uint8_t hc_num, uint8_
     tusb_otg_host_submit(host, hc_num);
   } while (0);
 
-  delayMicroseconds(200);
+  //delayMicroseconds(200);
 
   HC->HCSPLT = 0;
 

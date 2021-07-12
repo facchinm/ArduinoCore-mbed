@@ -68,6 +68,7 @@ int tusbh_mq_post(tusbh_msg_q_t* mq, const tusbh_message_t* msg)
     tusbh_message_t *mail = mail_box.alloc();
     memcpy(mail, msg, sizeof(tusbh_message_t));
     mail_box.put(mail);
+
     return 1;
 }
 
@@ -115,7 +116,7 @@ struct _tusbh_evt
     rtos::EventFlags* event;
 };
 
-#define MAX_EVENTS_COUNT    16
+#define MAX_EVENTS_COUNT    32
 static tusbh_evt_t* event_pool[MAX_EVENTS_COUNT] = { NULL };
 
 tusbh_evt_t* tusbh_evt_create()
@@ -167,34 +168,14 @@ int tusbh_evt_wait(tusbh_evt_t* evt, uint32_t timeout_ms)
     evt->event->wait_any(0xFF, timeout_ms);
 }
 
-static int mem_used;
-static int mem_max;
 void* tusbh_malloc(uint32_t size)
 {
-    size = (size + 3) & (~3);
-    mem_used+=size;
-    if(mem_max < mem_used){
-        mem_max = mem_used;
-    }
-    void* r = malloc(size+8);
-    TUSB_ASSERT( (r != 0) && (((uint32_t)r) & 3) == 0 );
-    uint32_t* p = (uint32_t*)r;
-    *p = size;
-    *(p + (size/4) + 1) = 0xdeadbeef;
-    //TUSB_OS_INFO("Allocate %p %d\n", p, size);
-    return (void*)(p+1);
+    return malloc(size);
 }
 
 void tusbh_free(void* ptr)
 {
-    TUSB_ASSERT(ptr != 0);
-    uint32_t* p = (uint32_t*)ptr;
-    p = p - 1;
-    uint32_t size = *p;
-    mem_used -= size;
-    TUSB_ASSERT(*(p+(size/4)+1) == 0xdeadbeef);
-    //TUSB_OS_INFO("Free %p %d\n", p, size);
-    free(p);
+    free(ptr);
 }
 
 void show_memory(void)

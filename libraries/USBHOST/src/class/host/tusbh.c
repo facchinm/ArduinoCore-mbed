@@ -834,7 +834,7 @@ static void tusbh_msg_root_enable(tusbh_message_t* msg)
             int res;
             dev->host = host;
             dev->speed = tusb_port_get_speed(host, port);
-            tusb_delay_ms(100);
+            //tusb_delay_ms(100);
             res = tusbh_device_attach(dev);
             if(res!=0){
                 TUSB_ROOT_INFO("Device attach failed\n");

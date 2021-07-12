@@ -103,7 +103,7 @@ void setup()
 }
 
 void loop() {
-  if (millis() > 5000 && millis() < 10000) {
+  if (millis() > 5000 && millis() < 7000) {
     auto devices = usb.lsusb();
     Serial.print("Device connected: ");
     if (devices.size() > 0) {
@@ -121,6 +121,7 @@ void loop() {
     }
   }
   delay(1000);
+  //yield();
   //usb.Task();
 }
 
