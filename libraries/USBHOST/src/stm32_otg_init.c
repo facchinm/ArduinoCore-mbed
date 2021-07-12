@@ -339,12 +339,22 @@ static void tusb_otg_core_init(tusb_core_t* core)
     NVIC_EnableIRQ(OTG_FS_IRQn);
     // 3. Init the core
     __HAL_RCC_USB_OTG_FS_CLK_ENABLE();
+
+#ifdef __HAL_RCC_USB1_OTG_FS_ULPI_CLK_SLEEP_DISABLE
+    __HAL_RCC_USB1_OTG_FS_ULPI_CLK_SLEEP_DISABLE();
+#endif
+#ifdef __HAL_RCC_USB2_OTG_FS_ULPI_CLK_SLEEP_DISABLE
+    __HAL_RCC_USB2_OTG_FS_ULPI_CLK_SLEEP_DISABLE();
+#endif
+
     /* Select FS Embedded PHY */
     USBx->GUSBCFG |= USB_OTG_GUSBCFG_PHYSEL;
     /* Reset after a PHY select and set Host mode */
     Wait_CoreReset(USBx);
     /* Deactivate the power down*/
     USBx->GCCFG = USB_OTG_GCCFG_PWRDWN;
+
+    __HAL_RCC_SYSCFG_CLK_ENABLE();
 
     NVIC_SetVector(OTG_FS_IRQn, (uint32_t)&OTG_FS_IRQHandler);
 #endif
