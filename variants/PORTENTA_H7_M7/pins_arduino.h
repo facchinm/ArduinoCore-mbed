@@ -116,6 +116,11 @@ static const uint8_t SCK  = PIN_SPI_SCK;
 #define BOARD_VENDORID		0x2341
 #define BOARD_PRODUCTID		0x025b
 #define BOARD_NAME			"Envie M7"
+#define MAYBE_USB_HOST_ON_CDC_PORT	1
+
+inline bool SerialUSBPortisHost() {
+	return (USB1_OTG_HS->GINTMSK & USB_OTG_GINTMSK_PRTIM) != 0;
+}
 
 #define DFU_MAGIC_SERIAL_ONLY_RESET   0xb0
 

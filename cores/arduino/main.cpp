@@ -37,8 +37,14 @@ int main(void)
 	initVariant();
 
 #if defined(SERIAL_CDC)
+#if MAYBE_USB_HOST_ON_CDC_PORT
+  if (!SerialUSBPortisHost()) {
+#endif
   PluggableUSBD().begin();
   _SerialUSB.begin(115200);
+#if MAYBE_USB_HOST_ON_CDC_PORT
+  }
+#endif
 #endif
 
 	setup();
