@@ -64,11 +64,6 @@
 #define RX_NO_MSG           0
 #define RX_NEW_MSG          1
 
-/* Private variables ---------------------------------------------------------*/
-static uint32_t msg_received = RX_NO_MSG;
-
-void OPENAMP_check_for_message(void);
-
 #include "cmsis_os.h"
 extern osThreadId eventHandlerThreadId;
 
@@ -77,15 +72,6 @@ void HAL_HSEM_FreeCallback(uint32_t SemMask)
 {
   /* Prevent unused argument(s) compilation warning */
   UNUSED(SemMask);
-  msg_received = RX_NEW_MSG;
-
-#ifdef CORE_CM7
-  HAL_HSEM_ActivateNotification(__HAL_HSEM_SEMID_TO_MASK(HSEM_ID_1));   
-#endif
-#ifdef CORE_CM4
-  HAL_HSEM_ActivateNotification(__HAL_HSEM_SEMID_TO_MASK(HSEM_ID_0));   
-#endif
-
   osSignalSet(eventHandlerThreadId, 0x1);
 }
 
@@ -123,19 +109,13 @@ int MAILBOX_Poll(struct virtio_device *vdev)
 {
   /* If we got an interrupt, ask for the corresponding virtqueue processing */
 
-  if (msg_received == RX_NEW_MSG)
-  {
 #ifdef CORE_CM7   
     rproc_virtio_notified(vdev, VRING0_ID);
 #endif                
 #ifdef CORE_CM4   
     rproc_virtio_notified(vdev, VRING1_ID);
-#endif                
-    msg_received = RX_NO_MSG;
+#endif
     return 0;
-  }
-
-  return -EAGAIN;
 }
 
 /**
