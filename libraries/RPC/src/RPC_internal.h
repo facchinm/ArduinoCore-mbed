@@ -100,9 +100,7 @@ class RPC : public Stream, public rpc::detail::dispatcher {
 		RingBufferN<256> rx_buffer;
 		bool initialized = false;
 
-		static int rpmsg_recv_rpc_callback(struct rpmsg_endpoint *ept, void *data,
-                                       size_t len, uint32_t src, void *priv);
-		static int rpmsg_recv_raw_callback(struct rpmsg_endpoint *ept, void *data,
+		static int rpmsg_recv_callback(struct rpmsg_endpoint *ept, void *data,
                                        size_t len, uint32_t src, void *priv);
 
 		static void new_service_cb(struct rpmsg_device *rdev, const char *name, uint32_t dest);
