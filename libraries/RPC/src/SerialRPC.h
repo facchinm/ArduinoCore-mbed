@@ -20,7 +20,7 @@ public:
 	void flush(void) {};
 
 	void onWrite(std::vector<uint8_t>& vec) {
-	  for (int i = 0; i < vec.size(); i++) {
+	  for (size_t i = 0; i < vec.size(); i++) {
 	  	rx_buffer.store_char(vec[i]);
 	  }
 	  // call attached function
@@ -42,7 +42,7 @@ public:
 
 	size_t write(uint8_t* buf, size_t len) {
 		tx_buffer.clear();
-		for (int i=0; i<len; i++) {
+		for (size_t i=0; i < len; i++) {
 			tx_buffer.push_back(buf[i]);
 		}
 		RPC1.call("on_write", tx_buffer);
@@ -52,8 +52,11 @@ public:
 	using Print::write;
 
 	int begin() {
-		RPC1.begin();
+		if (RPC1.begin() == 0) {
+			return 0;
+		}
 		RPC1.bind("on_write", mbed::callback(this, &SerialRPCClass::onWrite));
+		return 1;
 	}
 
 	operator bool() {

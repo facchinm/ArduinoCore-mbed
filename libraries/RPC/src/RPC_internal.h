@@ -110,6 +110,7 @@ class RPC : public Stream, public rpc::detail::dispatcher {
 		mbed::Ticker ticker;
 		rtos::Thread* eventThread;
 		rtos::Thread* dispatcherThread;
+
 		static uint8_t intermediate_buffer[1024];
 		mbed::Callback<void()> _rx;
 

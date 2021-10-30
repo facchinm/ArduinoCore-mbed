@@ -1,7 +1,5 @@
 #include "RPC_internal.h"
 
-#ifdef CORE_CM7
-
 static struct rpmsg_endpoint rp_endpoints[4];
 
 enum endpoints_t {
@@ -21,12 +19,6 @@ int RPC::rpmsg_recv_callback(struct rpmsg_endpoint *ept, void *data,
 
   memcpy(intermediate_buffer, data, len);
 
-  printf("primary: got message of len %d: ", len);
-  for (int i = 0; i < len; i++) {
-    printf("%02x ", ((uint8_t*)data)[i]);
-  }
-  printf("\n");
-
   osSignalSet(rpc->dispatcherThreadId, len);
 
   return 0;
@@ -37,7 +29,6 @@ void RPC::new_service_cb(struct rpmsg_device *rdev, const char *name, uint32_t d
   if (strcmp(name, "raw") == 0) {
     OPENAMP_create_endpoint(&rp_endpoints[ENDPOINT_RAW], name, dest, rpmsg_recv_callback, NULL);
   }
-  printf("got new service: %s\n", name);
 }
 
 osThreadId eventHandlerThreadId;
@@ -45,11 +36,12 @@ osThreadId eventHandlerThreadId;
 void eventHandler() {
   eventHandlerThreadId = osThreadGetId();
   while (1) {
-    osEvent v = osSignalWait(0, osWaitForever);
-    //delay(50);
+    osSignalWait(0, osWaitForever);
     OPENAMP_check_for_message();
   }
 }
+
+#ifdef CORE_CM7
 
 static void OpenAMP_MPU_Config(void)
 {
@@ -92,7 +84,6 @@ int RPC::begin() {
 
 	/* Initialize OpenAmp and libmetal libraries */
 	if (MX_OPENAMP_Init(RPMSG_MASTER, new_service_cb) !=  HAL_OK) {
-	 printf("openAMP init failed\n\rNo RPC is available\n\r");
 	 return 0;
 	}
 
@@ -111,17 +102,45 @@ int RPC::begin() {
 	*/
 	OPENAMP_Wait_EndPointready(&rp_endpoints[ENDPOINT_RAW], HAL_GetTick() + 500);
 
-  printf("After OPENAMP_Wait_EndPointready\n");
-
 	// Send first dummy message to enable the channel
 	uint8_t message = 0x00;
 	write(&message, sizeof(message));
 
-  printf("After dummy msg\n");
-
-	initialized = true;
 	return 1;
 }
+
+#endif
+
+
+#ifdef CORE_CM4
+
+int RPC::begin() {
+
+  eventThread = new rtos::Thread(osPriorityHigh);
+  eventThread->start(&eventHandler);
+
+  dispatcherThread = new rtos::Thread(osPriorityNormal);
+  dispatcherThread->start(mbed::callback(this, &RPC::dispatch));
+
+  /* Initialize OpenAmp and libmetal libraries */
+  if (MX_OPENAMP_Init(RPMSG_REMOTE, NULL) !=  0) {
+    return 0;
+  }
+
+  rp_endpoints[0].priv = this;
+
+  /* create a endpoint for raw rmpsg communication */
+  int status = OPENAMP_create_endpoint(&rp_endpoints[ENDPOINT_RAW], "raw", RPMSG_ADDR_ANY,
+                                   rpmsg_recv_callback, NULL);
+  if (status < 0)
+  {
+    return 0;
+  }
+
+  return 1;
+}
+
+#endif
 
 using raw_call_t = std::tuple<RPCLIB_MSGPACK::object>;
 
@@ -142,9 +161,6 @@ void RPC::dispatch() {
       auto msg = result.get();
 
       if (msg.via.array.size == 1) {
-
-        printf("msg.via.array.size == 1\n");
-
         // raw array
         raw_call_t arr;
         msg.convert(arr);
@@ -152,7 +168,7 @@ void RPC::dispatch() {
         std::vector<uint8_t> buf;
         std::get<0>(arr).convert(buf);
 
-        for (int i=0; i < buf.size(); i++) {
+        for (size_t i = 0; i < buf.size(); i++) {
           rx_buffer.store_char(buf[i]);
         }
         // call attached function
@@ -162,15 +178,13 @@ void RPC::dispatch() {
       }
 
       if (msg.via.array.size == 2) {
-
-        printf("msg.via.array.size == 2\n");
         // response
         auto r = rpc::detail::response(std::move(result));
         auto id = r.get_id();
         // fill the correct client stuff
         int i = 0;
         for (i = 0; i<10; i++) {
-          if (clients[i] != NULL && (int)clients[i]->callThreadId == id) {
+          if (clients[i] != NULL && (uint)clients[i]->callThreadId == id) {
             break;
           }
         }
@@ -180,9 +194,6 @@ void RPC::dispatch() {
       }
 
       if (msg.via.array.size > 2) {
-
-        printf("msg.via.array.size > 2\n");
-
         auto resp = rpc::detail::dispatcher::dispatch(msg, true);
         auto data = resp.get_data();
         if (resp.is_empty()) {
@@ -205,7 +216,7 @@ size_t RPC::write(uint8_t c) {
 size_t RPC::write(const uint8_t* buf, size_t len) {
 
   std::vector<uint8_t> tx_buffer;
-  for (int i = 0; i < len; i++) {
+  for (size_t i = 0; i < len; i++) {
     tx_buffer.push_back(buf[i]);
   }
   auto call_obj = std::make_tuple(tx_buffer);
@@ -219,5 +230,3 @@ size_t RPC::write(const uint8_t* buf, size_t len) {
 }
 
 arduino::RPC RPC1;
-
-#endif
