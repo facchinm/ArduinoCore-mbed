@@ -102,22 +102,26 @@ class RPC : public Stream, public rpc::detail::dispatcher {
 
 		static int rpmsg_recv_callback(struct rpmsg_endpoint *ept, void *data,
                                        size_t len, uint32_t src, void *priv);
+		static int rpmsg_recv_response_callback(struct rpmsg_endpoint *ept, void *data,
+                                       size_t len, uint32_t src, void *priv);
 
 		static void new_service_cb(struct rpmsg_device *rdev, const char *name, uint32_t dest);
 
 		void dispatch();
+		void response();
 		events::EventQueue eventQueue;
 		mbed::Ticker ticker;
 		rtos::Thread* eventThread;
 		rtos::Thread* dispatcherThread;
+		rtos::Thread* responseThread;
 
-		static uint8_t intermediate_buffer[1024];
 		mbed::Callback<void()> _rx;
 
 		//rpc::detail::response response;
 		RPCLIB_MSGPACK::object_handle call_result;
 
 		osThreadId dispatcherThreadId;
+		osThreadId responseThreadId;
 };
 }
 
