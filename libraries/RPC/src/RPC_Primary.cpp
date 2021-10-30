@@ -184,10 +184,18 @@ void RPC::response() {
     clients[i] = NULL;
   }
 
+  bool first_message = true;
+
   while (true) {
     osEvent v = osSignalWait(0, osWaitForever);
 
 {
+#ifdef CORE_CM4
+      if (first_message) {
+        first_message = false;
+        continue;
+      }
+#endif
       RPCLIB_MSGPACK::unpacker pac;
       memcpy(pac.buffer(), intermediate_buffer_resp, v.value.signals);
       pac.buffer_consumed(v.value.signals);
