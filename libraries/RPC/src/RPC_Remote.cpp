@@ -12,12 +12,17 @@ void rpc::client::send_msgpack(RPCLIB_MSGPACK::sbuffer *buffer) {
   OPENAMP_send(&rp_endpoints[ENDPOINT_RAW], (const uint8_t*)buffer->data(), buffer->size());
 }
 
+RPCLIB_MSGPACK::unpacker* RPC::pac_() {
+  static RPCLIB_MSGPACK::unpacker pac;
+  return &pac;
+}
+
 int RPC::rpmsg_recv_callback(struct rpmsg_endpoint *ept, void *data,
                                        size_t len, uint32_t src, void *priv)
 {
   RPC* rpc = (RPC*)priv;
-  memcpy(rpc->pac_.buffer(), (const void*)data, len);
-  rpc->pac_.buffer_consumed(len);
+  memcpy(rpc->pac_()->buffer(), (const void*)data, len);
+  rpc->pac_()->buffer_consumed(len);
 
 /*
   printf("remote: got message: ");
@@ -45,7 +50,7 @@ void eventHandler() {
 
 int RPC::begin() {
 
-  pac_.reserve_buffer(1024);
+  pac_()->reserve_buffer(1024);
 
   eventThread = new rtos::Thread(osPriorityHigh);
   eventThread->start(&eventHandler);
@@ -83,7 +88,7 @@ void RPC::dispatch() {
     osEvent v = osSignalWait(0, osWaitForever);
 
     RPCLIB_MSGPACK::unpacked result;
-    while (pac_.next(result)) {
+    while (pac_()->next(result)) {
       auto msg = result.get();
 
       if (msg.via.array.size == 1) {

@@ -12,20 +12,22 @@ void rpc::client::send_msgpack(RPCLIB_MSGPACK::sbuffer *buffer) {
   OPENAMP_send(&rp_endpoints[ENDPOINT_RAW], (const uint8_t*)buffer->data(), buffer->size());
 }
 
+uint8_t RPC::intermediate_buffer[1024];
+
 int RPC::rpmsg_recv_callback(struct rpmsg_endpoint *ept, void *data,
                                        size_t len, uint32_t src, void *priv)
 {
   RPC* rpc = (RPC*)priv;
-  memcpy(rpc->pac_.buffer(), (const void*)data, len);
-  rpc->pac_.buffer_consumed(len);
 
-  printf("primary: got message: ");
+  memcpy(intermediate_buffer, data, len);
+
+  printf("primary: got message of len %d: ", len);
   for (int i = 0; i < len; i++) {
     printf("%02x ", ((uint8_t*)data)[i]);
   }
   printf("\n");
 
-  osSignalSet(rpc->dispatcherThreadId, 0x1);
+  osSignalSet(rpc->dispatcherThreadId, len);
 
   return 0;
 }
@@ -61,8 +63,8 @@ static void OpenAMP_MPU_Config(void)
 	MPU_InitStruct.BaseAddress = D3_SRAM_BASE;
 	MPU_InitStruct.Size = MPU_REGION_SIZE_64KB;
 	MPU_InitStruct.AccessPermission = MPU_REGION_FULL_ACCESS;
-	MPU_InitStruct.IsBufferable = MPU_ACCESS_NOT_BUFFERABLE;
-	MPU_InitStruct.IsCacheable = MPU_ACCESS_NOT_CACHEABLE;
+	MPU_InitStruct.IsBufferable = MPU_ACCESS_BUFFERABLE;
+	MPU_InitStruct.IsCacheable = MPU_ACCESS_CACHEABLE;
 	MPU_InitStruct.IsShareable = MPU_ACCESS_SHAREABLE;
 	MPU_InitStruct.Number = MPU_REGION_NUMBER7;
 	MPU_InitStruct.TypeExtField = MPU_TEX_LEVEL0;
@@ -81,8 +83,6 @@ int RPC::begin() {
 
 	//resource_table_load_from_flash();
 	//HAL_SYSCFG_EnableCM4BOOT();
-
-  pac_.reserve_buffer(1024);
 
 	eventThread = new rtos::Thread(osPriorityHigh);
 	eventThread->start(&eventHandler);
@@ -132,8 +132,13 @@ void RPC::dispatch() {
   while (true) {
     osEvent v = osSignalWait(0, osWaitForever);
 
+{
+    RPCLIB_MSGPACK::unpacker pac;
+    memcpy(pac.buffer(), intermediate_buffer, v.value.signals);
+    pac.buffer_consumed(v.value.signals);
+
     RPCLIB_MSGPACK::unpacked result;
-    while (pac_.next(result)) {
+    while (pac.next(result)) {
       auto msg = result.get();
 
       if (msg.via.array.size == 1) {
@@ -188,6 +193,7 @@ void RPC::dispatch() {
       }
     }
   }
+}
 }
 
 
