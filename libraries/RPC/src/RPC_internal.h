@@ -78,6 +78,8 @@ class RPC : public Stream, public rpc::detail::dispatcher {
     		// find a free spot in clients[]
     		// create new object
     		// protect this with mutex
+
+    		mtx.lock();
     		int i = 0;
     		for (i=0; i<10; i++) {
     			if (clients[i] == NULL) {
@@ -85,12 +87,16 @@ class RPC : public Stream, public rpc::detail::dispatcher {
     				break;
     			}
     		}
+    		mtx.unlock();
+
     		// thread start and client .call
     		clients[i]->call(func_name, args...);
     		RPCLIB_MSGPACK::object_handle ret = std::move(clients[i]->result);
 
+    		mtx.lock();
     		delete clients[i];
     		clients[i] = NULL;
+    		mtx.unlock();
     		return ret;
     	}
 
@@ -114,6 +120,7 @@ class RPC : public Stream, public rpc::detail::dispatcher {
 		rtos::Thread* eventThread;
 		rtos::Thread* dispatcherThread;
 		rtos::Thread* responseThread;
+		rtos::Mutex mtx;
 
 		mbed::Callback<void()> _rx;
 

@@ -11,27 +11,46 @@ void rpc::client::send_msgpack(RPCLIB_MSGPACK::sbuffer *buffer) {
   OPENAMP_send(&rp_endpoints[ENDPOINT_RAW], (const uint8_t*)buffer->data(), buffer->size());
 }
 
-static uint8_t intermediate_buffer[1024];
-static uint8_t intermediate_buffer_resp[1024];
+static RingBufferN<256> intermediate_buffer;
+static RingBufferN<256> intermediate_buffer_resp;
+//static uint8_t intermediate_buffer_resp[256];
+static rtos::Mutex rx_mtx;
 
 int RPC::rpmsg_recv_callback(struct rpmsg_endpoint *ept, void *data,
                                        size_t len, uint32_t src, void *priv)
 {
   RPC* rpc = (RPC*)priv;
 
-  memcpy(intermediate_buffer, data, len);
+  for (size_t i = 0; i < len; i++) {
+    intermediate_buffer.store_char(((uint8_t*)data)[i]);
+  }
+  //memcpy(intermediate_buffer, data, len);
 
   osSignalSet(rpc->dispatcherThreadId, len);
 
   return 0;
 }
 
+static bool first_message = true;
+
 int RPC::rpmsg_recv_response_callback(struct rpmsg_endpoint *ept, void *data,
                                        size_t len, uint32_t src, void *priv)
 {
   RPC* rpc = (RPC*)priv;
 
-  memcpy(intermediate_buffer_resp, data, len);
+#ifdef CORE_CM4
+      if (first_message) {
+        first_message = false;
+        return 0;
+      }
+#endif
+
+  rx_mtx.lock();
+  for (size_t i = 0; i < len; i++) {
+    intermediate_buffer_resp.store_char(((uint8_t*)data)[i]);
+  }
+  //memcpy(intermediate_buffer_resp, data, len);
+  rx_mtx.unlock();
 
   osSignalSet(rpc->responseThreadId, len);
 
@@ -184,52 +203,42 @@ void RPC::response() {
     clients[i] = NULL;
   }
 
-  bool first_message = true;
-
   while (true) {
     osEvent v = osSignalWait(0, osWaitForever);
 
 {
-#ifdef CORE_CM4
-      if (first_message) {
-        first_message = false;
-        continue;
-      }
-#endif
       RPCLIB_MSGPACK::unpacker pac;
-      memcpy(pac.buffer(), intermediate_buffer_resp, v.value.signals);
-      pac.buffer_consumed(v.value.signals);
 
-      for (int i = 0; i< v.value.signals; i++) {
-        printf("%02x ", intermediate_buffer_resp[i]);
+      rx_mtx.lock();
+      int len = intermediate_buffer_resp.available();
+      for (int i = 0; i < len; i++) {
+        pac.buffer()[i] = intermediate_buffer_resp.read_char();
       }
-      printf("\n");
+      pac.buffer_consumed(len);
+      rx_mtx.unlock();
+
+      //memcpy(pac.buffer(), intermediate_buffer_resp, v.value.signals);
+      //pac.buffer_consumed(v.value.signals);
 
       RPCLIB_MSGPACK::unpacked result;
       while (pac.next(result)) {
-        printf("result is ok\n");
         auto r = rpc::detail::response(std::move(result));
-        printf("response is ok\n");
         auto id = r.get_id();
-        printf("get_id is ok\n");
         // fill the correct client stuff
-        int i;
-        for (i = 0; i<10; i++) {
-          printf("finding thread\n");
+        rpc::client* client = NULL;
+        for (int i = 0; i < 10; i++) {
           if (clients[i] != NULL) {
             if ((uint)clients[i]->callThreadId == id) {
-              printf("id: %x id: %x\n", clients[i]->callThreadId, id);
+              client = clients[i];
               break;
             }
           }
         }
-        if (i == 10) {
-          continue;
+        if (client != NULL) {
+          client->result = std::move(*r.get_result());
+          // Unlock callThreadId thread
+          osSignalSet(client->callThreadId, 0x1);
         }
-        clients[i]->result = std::move(*r.get_result());
-        printf("unlocking caller thread\n");
-        // Unlock callThreadId thread
-        osSignalSet(clients[i]->callThreadId, 0x1);
       }
     }
   }
@@ -244,8 +253,14 @@ void RPC::dispatch() {
 
 {
     RPCLIB_MSGPACK::unpacker pac;
-    memcpy(pac.buffer(), intermediate_buffer, v.value.signals);
-    pac.buffer_consumed(v.value.signals);
+    int len = intermediate_buffer.available();
+    for (int i = 0; i< len; i++) {
+      pac.buffer()[i] = intermediate_buffer.read_char();
+    }
+    pac.buffer_consumed(len);
+
+    //memcpy(pac.buffer(), intermediate_buffer, v.value.signals);
+    //pac.buffer_consumed(v.value.signals);
 
     RPCLIB_MSGPACK::unpacked result;
     while (pac.next(result)) {
