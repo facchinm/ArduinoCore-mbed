@@ -244,7 +244,7 @@ int dsi_init(uint8_t bus, struct edid *edid, struct display_timing *dt) {
 	HAL_DSI_Refresh(&dsi);
 
 	dsi_layerInit(0, FB_ADDRESS_0);
-	dsi_layerInit(1, FB_ADDRESS_1);
+	dsi_layerInit(1, FB_ADDRESS_0 + (lcd_x_size * lcd_y_size * BYTES_PER_PIXEL));
 
 	HAL_DSI_PatternGeneratorStop(&dsi);
 	
@@ -402,7 +402,7 @@ extern "C" void LTDC_IRQHandler(void) {
 }
 
 /* Reload LTDC event callback */
-void HAL_LTDC_ReloadEventCallback(LTDC_HandleTypeDef *hltdc) {
+extern "C" void HAL_LTDC_ReloadEventCallback(LTDC_HandleTypeDef *hltdc) {
   reloadLTDC_status = 1;
 }
 
