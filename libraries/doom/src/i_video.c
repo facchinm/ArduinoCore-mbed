@@ -114,7 +114,7 @@ int mouse_threshold = 10;
 
 // Gamma correction level to use
 
-int usegamma = 0;
+int usegamma = 2;
 
 typedef struct
 {
