@@ -27,18 +27,23 @@ void lvgl_displayFlushing(lv_disp_drv_t * disp, const lv_area_t * area, lv_color
 #endif
 
 /* Functions -----------------------------------------------------------------*/
-Arduino_H7_Video::Arduino_H7_Video(int width, int heigth, H7DisplayShield &shield) :
-  ArduinoGraphics(width, heigth) {
+Arduino_H7_Video::Arduino_H7_Video(int width, int height, H7DisplayShield &shield)
+#ifdef HAS_ARDUINOGRAPHICS
+   : ArduinoGraphics(width, height)
+#endif
+{
+  _height = height;
+  _width = width;
   _shield   = &shield;
-  _edidMode = _shield->getEdidMode(width, heigth);
+  _edidMode = _shield->getEdidMode(width, height);
 
   switch(_edidMode) {
     case EDID_MODE_640x480_60Hz ... EDID_MODE_800x600_59Hz: 
     case EDID_MODE_1024x768_60Hz ... EDID_MODE_1920x1080_60Hz:
-      _rotated = (width < heigth) ? true : false;
+      _rotated = (width < height) ? true : false;
       break;
     case EDID_MODE_480x800_60Hz:
-      _rotated = (width >= heigth) ? true : false;
+      _rotated = (width >= height) ? true : false;
       break;
     default:
       _rotated = false;
@@ -50,11 +55,14 @@ Arduino_H7_Video::~Arduino_H7_Video() {
 }
 
 int Arduino_H7_Video::begin() {
+
+#ifdef HAS_ARDUINOGRAPHICS
   if (!ArduinoGraphics::begin()) {
     return H7V_ERR_UNKNOWN;
   }
 
   textFont(Font_5x7);
+#endif
 
   /* Configure SDRAM */
   SDRAM.begin();
@@ -97,23 +105,33 @@ int Arduino_H7_Video::begin() {
 }
 
 void Arduino_H7_Video::end() {
+#ifdef HAS_ARDUINOGRAPHICS
   ArduinoGraphics::end();
+#endif
 }
 
 void Arduino_H7_Video::beginDraw() {
+#ifdef HAS_ARDUINOGRAPHICS
   ArduinoGraphics::beginDraw();
+#endif
 
   dsi_lcdClear(0); 
 }
 
 void Arduino_H7_Video::endDraw() {
+#ifdef HAS_ARDUINOGRAPHICS
   ArduinoGraphics::endDraw();
+#endif
 
   dsi_drawCurrentFrameBuffer();
 }
 
 void Arduino_H7_Video::clear(){
+#ifdef HAS_ARDUINOGRAPHICS
   uint32_t bg = ArduinoGraphics::background();
+#else
+  uint32_t bg = 0;
+#endif
   uint32_t x_size, y_size;
 
   if(_rotated) {
