@@ -266,6 +266,7 @@ void I_FinishUpdate (void)
     uint8_t* inbuf = I_VideoBuffer;
     uint8_t* outbuf = I_VideoBuffer_FB;
 
+    // this function simply doubles the resolution
     for (uint32_t i = 0; i < SCREENHEIGHT; i++) {
         uint8_t* inbuf_temp = inbuf;
         uint8_t* outbuf_temp = outbuf;
