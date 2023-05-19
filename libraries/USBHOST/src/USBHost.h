@@ -36,8 +36,8 @@ private:
 
 	void InternalTask();
 	tusbh_msg_q_t* mq;
-	tusb_host_t* _fs;
-	tusb_host_t* _hs;
+	tusb_host_t* _fs = nullptr;
+	tusb_host_t* _hs = nullptr;
 	tusbh_root_hub_t root_fs;
 	tusbh_root_hub_t root_hs;
 };

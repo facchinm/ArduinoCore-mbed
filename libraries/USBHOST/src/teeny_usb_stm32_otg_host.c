@@ -526,6 +526,12 @@ static void tusb_otg_out_channel_handler(tusb_host_t* host, uint8_t ch_num)
   tusb_hc_data_t* hc = &host->hc[ch_num];
   uint32_t tmpreg;
 
+#ifdef CORE_CM7
+  //SCB_CleanDCache_by_Addr(hc->ch_buf, hc->size * 4);
+  //SCB_InvalidateDCache_by_Addr(hc->ch_buf, hc->size * 4);
+  SCB_InvalidateDCache();
+#endif
+
   if ((HC->HCINT & USB_OTG_HCINT_AHBERR) == USB_OTG_HCINT_AHBERR)
   {
     HC_LOG_DATA(host, ch_num, TUSB_CS_AHB_ERROR);
@@ -732,6 +738,11 @@ void tusb_otg_host_handler(tusb_host_t* host)
   if(INTR() == 0){
     return;
   }
+  /* Handle Host SOF Interrupts */
+  if( INTR() & USB_OTG_GINTSTS_SOF ){
+    USBx->GINTSTS = USB_OTG_GINTSTS_SOF;
+    tusb_host_sof_event(host);
+  }
   if( INTR() & USB_OTG_GINTSTS_PXFR_INCOMPISOOUT ){
     USBx->GINTSTS = USB_OTG_GINTSTS_PXFR_INCOMPISOOUT;
   }
@@ -788,11 +799,6 @@ void tusb_otg_host_handler(tusb_host_t* host)
   /* Handle Host Port Interrupts */
   if( INTR() & USB_OTG_GINTSTS_HPRTINT ){
     tusb_host_port_handler(host);
-  }
-  /* Handle Host SOF Interrupts */
-  if( INTR() & USB_OTG_GINTSTS_SOF ){
-    USBx->GINTSTS = USB_OTG_GINTSTS_SOF;
-      tusb_host_sof_event(host);
   }
   /* Handle Host channel Interrupts */
   if( INTR() & USB_OTG_GINTSTS_HCINT ){

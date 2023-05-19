@@ -836,10 +836,9 @@ static void tusbh_msg_root_enable(tusbh_message_t* msg)
             dev->speed = tusb_port_get_speed(host, port);
             tusb_delay_ms(100);
             res = -1;
-            while (res!=0){
+            do {
                 res = tusbh_device_attach(dev);
-                TUSB_ROOT_INFO("Device attach failed\n");
-            }
+            } while (res != 0);
         }
     }else{
         TUSB_ROOT_INFO("Wrong Port ENABLE\n");
@@ -945,7 +944,7 @@ static void process_period_ep(tusbh_device_t* dev)
                     ep->remain_interval--;
                 }
                 if(!ep->remain_interval){
-                    ep->remain_interval = ep->desc->bInterval;
+                    ep->remain_interval = ep->desc->bInterval / 2;
                     start_period_in(dev, ep);
                 }
             }

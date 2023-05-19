@@ -432,8 +432,7 @@ static void tusb_otg_core_init(tusb_core_t* core)
     USBx->GAHBCFG |= USB_OTG_GAHBCFG_HBSTLEN_2;
     USBx->GAHBCFG |= USB_OTG_GAHBCFG_DMAEN;
     #ifdef CORE_CM7
-    SCB_CleanInvalidateDCache();
-    SCB_DisableDCache();
+    SCB->CACR |= SCB_CACR_FORCEWT_Msk;
     #endif
   }
 #endif
@@ -714,7 +713,7 @@ int tusb_get_device_speed(tusb_device_t* dev)
 }
 
 void tusb_otg_device_handler(tusb_device_t* dev);
-void tusb_otg_host_handler(tusb_host_t* dev);
+void tusb_otg_host_handler(tusb_host_t* dev) __attribute__((optimize("-O3")));
 
 #define TUSB_OTG_GetMode(USBx) ((USBx->GINTSTS ) & 0x1U)
 
@@ -777,22 +776,24 @@ static tusb_otg_t tusb_otg_hs;
 #define  tusb_host_otg_hs  (tusb_otg_hs.host)
 #endif
 
+#pragma GCC optimize("O2,inline")
+
 void OTG_HS_IRQHandler(void)
 {
 #if defined(RTOS_INTERRUPT_ENTER)
   RTOS_INTERRUPT_ENTER();
 #endif
-  if (TUSB_OTG_GetMode(USB_OTG_HS) == USB_OTG_MODE_DEVICE){
-#if defined(NO_DEVICE)
-    while(1);
-#else
-    tusb_otg_device_handler(&tusb_dev_otg_hs);
-#endif
-  }else{
+  if (TUSB_OTG_GetMode(USB_OTG_HS) == USB_OTG_MODE_HOST){
 #if defined(NO_HOST)
     while(1);
 #else
     tusb_otg_host_handler(&tusb_host_otg_hs);
+#endif
+  }else{
+#if defined(NO_DEVICE)
+    while(1);
+#else
+    tusb_otg_device_handler(&tusb_dev_otg_hs);
 #endif
   }
 #if defined(RTOS_INTERRUPT_LEAVE)

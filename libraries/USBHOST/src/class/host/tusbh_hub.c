@@ -377,6 +377,7 @@ static int hub_data_xfered(tusbh_ep_info_t* ep)
                 dev->children[port-1] = child;
                 tusbh_set_hub_port_feature(dev, port, HUB_FEATURE_SEL_PORT_RESET);
                 tusb_delay_ms(info->hub_desc.bPowerOnToPowerGood);
+                tusb_delay_ms(100);
                 continue;
             }
         }else{
