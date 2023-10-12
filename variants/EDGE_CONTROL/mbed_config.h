@@ -71,7 +71,7 @@
 #define MBED_CONF_BLE_API_IMPLEMENTATION_MAX_CHARACTERISTIC_AUTHORISATION_COUNT 20                                                                                               // set by library:ble-api-implementation
 #define MBED_CONF_BLE_PRESENT                                                   1                                                                                                // set by library:ble
 #define MBED_CONF_BLE_TRACE_HUMAN_READABLE_ENUMS                                0                                                                                                // set by library:ble
-#define MBED_CONF_CELLULAR_AT_HANDLER_BUFFER_SIZE                               512                                                                                              // set by application[*]
+#define MBED_CONF_CELLULAR_AT_HANDLER_BUFFER_SIZE                               1024                                                                                             // set by application[*]
 #define MBED_CONF_CELLULAR_CONTROL_PLANE_OPT                                    0                                                                                                // set by library:cellular
 #define MBED_CONF_CELLULAR_DEBUG_AT                                             1                                                                                                // set by application[*]
 #define MBED_CONF_CELLULAR_MAX_CP_DATA_RECV_LEN                                 1358                                                                                             // set by library:cellular
@@ -334,7 +334,7 @@
 #define MBED_CONF_RTOS_IDLE_THREAD_STACK_SIZE                                   512                                                                                              // set by library:rtos
 #define MBED_CONF_RTOS_IDLE_THREAD_STACK_SIZE_DEBUG_EXTRA                       0                                                                                                // set by library:rtos
 #define MBED_CONF_RTOS_IDLE_THREAD_STACK_SIZE_TICKLESS_EXTRA                    256                                                                                              // set by library:rtos
-#define MBED_CONF_RTOS_MAIN_THREAD_STACK_SIZE                                   32768                                                                                            // set by application[*]
+#define MBED_CONF_RTOS_MAIN_THREAD_STACK_SIZE                                   4096                                                                                             // set by application[*]
 #define MBED_CONF_RTOS_MSGQUEUE_DATA_SIZE                                       0                                                                                                // set by library:rtos
 #define MBED_CONF_RTOS_MSGQUEUE_NUM                                             0                                                                                                // set by library:rtos
 #define MBED_CONF_RTOS_MUTEX_NUM                                                0                                                                                                // set by library:rtos
@@ -447,6 +447,8 @@
 #define LHCI_ENABLE_VS                                                          0                                                                                                // defined by library:cordio-nordic-ll
 #define LL_MAX_PER_SCAN                                                         3                                                                                                // defined by library:cordio-nordic-ll
 #define MBEDTLS_CIPHER_MODE_CTR                                                                                                                                                  // defined by library:SecureStore
+#define MBEDTLS_SHA1_C                                                          1                                                                                                // defined by application
+#define MBED_CONF_TLS_SOCKET_DEBUG_LEVEL                                        2                                                                                                // defined by application
 #define MBED_HEAP_STATS_ENABLED                                                 1                                                                                                // defined by application
 #define MBED_MEM_TRACING_ENABLED                                                1                                                                                                // defined by application
 #define MBED_STACK_STATS_ENABLED                                                1                                                                                                // defined by application

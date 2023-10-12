@@ -167,6 +167,7 @@ void arduino::GSMClass::debug(Stream& stream) {
   trace_stream = &stream;
   mbed_trace_print_function_set(arduino_print);
   mbed_trace_prefix_function_set( &trace_time );
+  mbed_trace_config_set(TRACE_ACTIVE_LEVEL_ALL);
 
   mbed_trace_mutex_wait_function_set(trace_wait);
   mbed_trace_mutex_release_function_set(trace_release);
