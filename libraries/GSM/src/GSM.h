@@ -103,6 +103,7 @@ public:
   int ping(const char* hostname, uint8_t ttl = 128);
   int ping(const String& hostname, uint8_t ttl = 128);
   int ping(IPAddress host, uint8_t ttl = 128);
+  bool isConnected();
 
   friend class GSMClient;
   friend class GSMUDP;
