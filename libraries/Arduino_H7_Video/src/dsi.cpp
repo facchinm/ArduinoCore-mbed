@@ -15,8 +15,8 @@
 #include "SDRAM.h"
 
 /* Private define ------------------------------------------------------------*/
-#define LCD_MAX_X_SIZE 		1280
-#define LCD_MAX_Y_SIZE 		1024
+#define LCD_MAX_X_SIZE 		800
+#define LCD_MAX_Y_SIZE 		600
 
 #define BYTES_PER_PIXEL		2
 #define FB_BASE_ADDRESS 	((uint32_t)SDRAM_START_ADDRESS)
