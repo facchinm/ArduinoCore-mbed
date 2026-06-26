@@ -50,6 +50,7 @@ int SDRAMClass::begin(uint32_t start_address) {
         #endif
 	}
 
+	malloc_init();
 	if (start_address) {
 		malloc_addblock((void*)start_address, SDRAM_END_ADDRESS - start_address);
 	}

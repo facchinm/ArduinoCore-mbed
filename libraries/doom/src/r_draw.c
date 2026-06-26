@@ -115,8 +115,10 @@ void R_DrawColumn (void)
 #ifdef RANGECHECK 
     if ((unsigned)dc_x >= SCREENWIDTH
 	|| dc_yl < 0
-	|| dc_yh >= SCREENHEIGHT) 
-	I_Error ("R_DrawColumn: %i to %i at %i", dc_yl, dc_yh, dc_x); 
+	|| dc_yh >= SCREENHEIGHT) {
+		I_Error ("R_DrawColumn: %i to %i at %i", dc_yl, dc_yh, dc_x);
+		return;
+    }
 #endif 
 
     // Framebuffer destination address.
@@ -225,8 +227,8 @@ void R_DrawColumnLow (void)
 	|| dc_yl < 0
 	|| dc_yh >= SCREENHEIGHT)
     {
-	
-	I_Error ("R_DrawColumn: %i to %i at %i", dc_yl, dc_yh, dc_x);
+		I_Error ("R_DrawColumn: %i to %i at %i", dc_yl, dc_yh, dc_x);
+		return;
     }
     //	dccount++; 
 #endif 
@@ -439,6 +441,7 @@ void R_DrawTranslatedColumn (void)
     {
 	I_Error ( "R_DrawColumn: %i to %i at %i",
 		  dc_yl, dc_yh, dc_x);
+	return;
     }
     
 #endif 
@@ -488,8 +491,8 @@ void R_DrawTranslatedColumnLow (void)
     {
 	I_Error ( "R_DrawColumn: %i to %i at %i",
 		  dc_yl, dc_yh, x);
+	return;
     }
-    
 #endif 
 
 

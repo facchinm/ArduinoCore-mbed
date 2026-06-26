@@ -82,6 +82,8 @@ __attribute__((weak)) void malloc_init(void)
 {
 	// Unused here, override to specify your own init functin
 	// Which includes malloc_addblock calls
+	uint8_t* _tmp_data = malloc(32 * 1024);
+	malloc_addblock(_tmp_data, 32 * 1024);
 }
 
 void* ea_malloc(size_t size)

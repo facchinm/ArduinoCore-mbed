@@ -168,6 +168,7 @@ uint32_t fbs[2];
 void DG_Init()
 {
   display.begin();
+  memset((void*)SDRAM_START_ADDRESS, 0, dsi_getFramebufferEnd() - SDRAM_START_ADDRESS);
 }
 
 void DG_OnPaletteReload() {

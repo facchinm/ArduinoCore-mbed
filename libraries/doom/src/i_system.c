@@ -395,6 +395,7 @@ void I_Error (char *error, ...)
     va_end(argptr);
 
     // Shutdown. Here might be other errors.
+    return;
 
     entry = exit_funcs;
 
